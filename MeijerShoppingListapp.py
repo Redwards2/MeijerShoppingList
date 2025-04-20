@@ -35,7 +35,13 @@ if st.session_state.edit_index is not None:
     ))
 else:
     item = st.text_input("Item Name")
-category = st.selectbox("Category", ["Pickup", "In-Store"], index=(0 if st.session_state.edit_category == "Pickup" else 1))
+
+# Handle safe selectbox default index
+default_index = 0
+if st.session_state.edit_category == "In-Store":
+    default_index = 1
+
+category = st.selectbox("Category", ["Pickup", "In-Store"], index=default_index)
 
 if st.button("Save Item"):
     if item:
