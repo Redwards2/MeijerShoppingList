@@ -76,6 +76,7 @@ def display_list(items, category):
             if st.button("❌", key=f"delete_{category}_{i}"):
                 st.session_state.delete_index = i
                 st.session_state.delete_category = category
+                st.session_state.run_deletion = True
 
 st.subheader("Pickup Items")
 if st.session_state.pickup_items:
@@ -89,14 +90,19 @@ if st.session_state.instore_items:
 else:
     st.caption("No in-store items yet.")
 
-# Handle deletion after loop
-delete_index = st.session_state.delete_index
-delete_category = st.session_state.delete_category
-if delete_index is not None and delete_category is not None:
-    if delete_category == "Pickup" and 0 <= delete_index < len(st.session_state.pickup_items):
-        st.session_state.pickup_items.pop(delete_index)
-    elif delete_category == "In-Store" and 0 <= delete_index < len(st.session_state.instore_items):
-        st.session_state.instore_items.pop(delete_index)
+# Perform deletion only if triggered
+if st.session_state.get("run_deletion"):
+    delete_index = st.session_state.delete_index
+    delete_category = st.session_state.delete_category
+
+    if delete_index is not None and delete_category is not None:
+        if delete_category == "Pickup" and 0 <= delete_index < len(st.session_state.pickup_items):
+            st.session_state.pickup_items.pop(delete_index)
+        elif delete_category == "In-Store" and 0 <= delete_index < len(st.session_state.instore_items):
+            st.session_state.instore_items.pop(delete_index)
+
+    # Reset deletion triggers
     st.session_state.delete_index = None
     st.session_state.delete_category = None
+    st.session_state.run_deletion = False
     st.experimental_rerun()
