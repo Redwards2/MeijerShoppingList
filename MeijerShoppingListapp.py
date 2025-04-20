@@ -1,4 +1,6 @@
 import streamlit as st
+from streamlit_extras.stylable_container import stylable_container
+from streamlit_extras.emoji_icons import emoji_icon
 
 st.set_page_config(page_title="Shopping List App", layout="centered")
 st.title("Weekly Shopping List")
@@ -8,6 +10,10 @@ if 'pickup_items' not in st.session_state:
     st.session_state.pickup_items = []
 if 'instore_items' not in st.session_state:
     st.session_state.instore_items = []
+if 'edit_index' not in st.session_state:
+    st.session_state.edit_index = None
+if 'edit_category' not in st.session_state:
+    st.session_state.edit_category = None
 
 # Sidebar for actions
 with st.sidebar:
@@ -21,28 +27,56 @@ with st.sidebar:
 
 # Input section
 st.subheader("Add New Item")
-item = st.text_input("Item Name")
-category = st.selectbox("Category", ["Pickup", "In-Store"])
+if st.session_state.edit_index is not None:
+    item = st.text_input("Edit Item", value=(
+        st.session_state.pickup_items[st.session_state.edit_index]
+        if st.session_state.edit_category == "Pickup"
+        else st.session_state.instore_items[st.session_state.edit_index]
+    ))
+else:
+    item = st.text_input("Item Name")
+category = st.selectbox("Category", ["Pickup", "In-Store"], index=(0 if st.session_state.edit_category == "Pickup" else 1))
 
-if st.button("Add Item"):
+if st.button("Save Item"):
     if item:
-        if category == "Pickup":
-            st.session_state.pickup_items.append(item)
+        if st.session_state.edit_index is not None:
+            if category == "Pickup":
+                st.session_state.pickup_items[st.session_state.edit_index] = item
+            else:
+                st.session_state.instore_items[st.session_state.edit_index] = item
+            st.session_state.edit_index = None
+            st.session_state.edit_category = None
         else:
-            st.session_state.instore_items.append(item)
+            if category == "Pickup":
+                st.session_state.pickup_items.append(item)
+            else:
+                st.session_state.instore_items.append(item)
         st.experimental_rerun()
 
-# Display shopping list
+# Display shopping list with edit/delete icons
+def display_list(items, category):
+    for i, item in enumerate(items):
+        col1, col2, col3 = st.columns([6, 1, 1])
+        with col1:
+            st.markdown(f"- {item}")
+        with col2:
+            if st.button("✏️", key=f"edit_{category}_{i}"):
+                st.session_state.edit_index = i
+                st.session_state.edit_category = category
+                st.experimental_rerun()
+        with col3:
+            if st.button("❌", key=f"delete_{category}_{i}"):
+                items.pop(i)
+                st.experimental_rerun()
+
 st.subheader("Pickup Items")
 if st.session_state.pickup_items:
-    for i, item in enumerate(st.session_state.pickup_items):
-        st.markdown(f"- {item}")
+    display_list(st.session_state.pickup_items, "Pickup")
 else:
     st.caption("No pickup items yet.")
 
 st.subheader("In-Store Items")
 if st.session_state.instore_items:
-    for i, item in enumerate(st.session_state.instore_items):
-        st.markdown(f"- {item}")
+    display_list(st.session_state.instore_items, "In-Store")
 else:
     st.caption("No in-store items yet.")
