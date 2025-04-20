@@ -76,7 +76,7 @@ def display_list(items, category):
             if st.button("❌", key=f"delete_{category}_{i}"):
                 st.session_state.delete_index = i
                 st.session_state.delete_category = category
-                st.experimental_rerun()
+                # no rerun here!
 
 st.subheader("Pickup Items")
 if st.session_state.pickup_items:
