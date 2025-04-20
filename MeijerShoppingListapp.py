@@ -17,8 +17,6 @@ if 'delete_index' not in st.session_state:
 if 'delete_category' not in st.session_state:
     st.session_state.delete_category = None
 
-trigger_rerun = False
-
 # Sidebar for actions
 with st.sidebar:
     st.header("Options")
@@ -61,7 +59,7 @@ if st.button("Save Item"):
                 st.session_state.pickup_items.append(item)
             else:
                 st.session_state.instore_items.append(item)
-        trigger_rerun = True
+        st.experimental_rerun()
 
 # Display shopping list with edit/delete icons
 def display_list(items, category):
@@ -97,13 +95,8 @@ delete_category = st.session_state.delete_category
 if delete_index is not None and delete_category is not None:
     if delete_category == "Pickup" and 0 <= delete_index < len(st.session_state.pickup_items):
         st.session_state.pickup_items.pop(delete_index)
-        trigger_rerun = True
     elif delete_category == "In-Store" and 0 <= delete_index < len(st.session_state.instore_items):
         st.session_state.instore_items.pop(delete_index)
-        trigger_rerun = True
     st.session_state.delete_index = None
     st.session_state.delete_category = None
-
-# Trigger rerun at the end only if flagged
-if trigger_rerun:
     st.experimental_rerun()
