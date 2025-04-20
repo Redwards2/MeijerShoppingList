@@ -76,7 +76,6 @@ def display_list(items, category):
             if st.button("❌", key=f"delete_{category}_{i}"):
                 st.session_state.delete_index = i
                 st.session_state.delete_category = category
-                # no rerun here!
 
 st.subheader("Pickup Items")
 if st.session_state.pickup_items:
@@ -94,9 +93,9 @@ else:
 delete_index = st.session_state.delete_index
 delete_category = st.session_state.delete_category
 if delete_index is not None and delete_category is not None:
-    if delete_category == "Pickup" and delete_index < len(st.session_state.pickup_items):
+    if delete_category == "Pickup" and 0 <= delete_index < len(st.session_state.pickup_items):
         st.session_state.pickup_items.pop(delete_index)
-    elif delete_category == "In-Store" and delete_index < len(st.session_state.instore_items):
+    elif delete_category == "In-Store" and 0 <= delete_index < len(st.session_state.instore_items):
         st.session_state.instore_items.pop(delete_index)
     st.session_state.delete_index = None
     st.session_state.delete_category = None
