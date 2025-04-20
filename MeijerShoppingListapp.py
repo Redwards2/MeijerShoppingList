@@ -12,10 +12,6 @@ if 'edit_index' not in st.session_state:
     st.session_state.edit_index = None
 if 'edit_category' not in st.session_state:
     st.session_state.edit_category = None
-if 'delete_index' not in st.session_state:
-    st.session_state.delete_index = None
-if 'delete_category' not in st.session_state:
-    st.session_state.delete_category = None
 
 # Sidebar for actions
 with st.sidebar:
@@ -74,9 +70,11 @@ def display_list(items, category):
                 st.experimental_rerun()
         with col3:
             if st.button("❌", key=f"delete_{category}_{i}"):
-                st.session_state.delete_index = i
-                st.session_state.delete_category = category
-                st.session_state.run_deletion = True
+                if category == "Pickup" and 0 <= i < len(st.session_state.pickup_items):
+                    st.session_state.pickup_items.pop(i)
+                elif category == "In-Store" and 0 <= i < len(st.session_state.instore_items):
+                    st.session_state.instore_items.pop(i)
+                st.experimental_rerun()
 
 st.subheader("Pickup Items")
 if st.session_state.pickup_items:
@@ -89,20 +87,3 @@ if st.session_state.instore_items:
     display_list(st.session_state.instore_items, "In-Store")
 else:
     st.caption("No in-store items yet.")
-
-# Perform deletion only if triggered
-if st.session_state.get("run_deletion"):
-    delete_index = st.session_state.delete_index
-    delete_category = st.session_state.delete_category
-
-    if delete_index is not None and delete_category is not None:
-        if delete_category == "Pickup" and 0 <= delete_index < len(st.session_state.pickup_items):
-            st.session_state.pickup_items.pop(delete_index)
-        elif delete_category == "In-Store" and 0 <= delete_index < len(st.session_state.instore_items):
-            st.session_state.instore_items.pop(delete_index)
-
-    # Reset deletion triggers
-    st.session_state.delete_index = None
-    st.session_state.delete_category = None
-    st.session_state.run_deletion = False
-    st.experimental_rerun()
