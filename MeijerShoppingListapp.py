@@ -59,7 +59,7 @@ if st.button("Save Item"):
 
 # Display shopping list with edit/delete icons
 def display_list(items, category):
-    for i, item in enumerate(items):
+    for i, item in enumerate(list(items)):
         col1, col2, col3 = st.columns([6, 1, 1])
         with col1:
             st.markdown(f"- {item}")
