@@ -12,6 +12,10 @@ if 'edit_index' not in st.session_state:
     st.session_state.edit_index = None
 if 'edit_category' not in st.session_state:
     st.session_state.edit_category = None
+if 'delete_index' not in st.session_state:
+    st.session_state.delete_index = None
+if 'delete_category' not in st.session_state:
+    st.session_state.delete_category = None
 
 # Sidebar for actions
 with st.sidebar:
@@ -59,7 +63,7 @@ if st.button("Save Item"):
 
 # Display shopping list with edit/delete icons
 def display_list(items, category):
-    for i, item in enumerate(list(items)):
+    for i, item in enumerate(items):
         col1, col2, col3 = st.columns([6, 1, 1])
         with col1:
             st.markdown(f"- {item}")
@@ -70,7 +74,8 @@ def display_list(items, category):
                 st.experimental_rerun()
         with col3:
             if st.button("❌", key=f"delete_{category}_{i}"):
-                items.pop(i)
+                st.session_state.delete_index = i
+                st.session_state.delete_category = category
                 st.experimental_rerun()
 
 st.subheader("Pickup Items")
@@ -84,3 +89,15 @@ if st.session_state.instore_items:
     display_list(st.session_state.instore_items, "In-Store")
 else:
     st.caption("No in-store items yet.")
+
+# Handle deletion after loop
+delete_index = st.session_state.delete_index
+delete_category = st.session_state.delete_category
+if delete_index is not None and delete_category is not None:
+    if delete_category == "Pickup" and delete_index < len(st.session_state.pickup_items):
+        st.session_state.pickup_items.pop(delete_index)
+    elif delete_category == "In-Store" and delete_index < len(st.session_state.instore_items):
+        st.session_state.instore_items.pop(delete_index)
+    st.session_state.delete_index = None
+    st.session_state.delete_category = None
+    st.experimental_rerun()
