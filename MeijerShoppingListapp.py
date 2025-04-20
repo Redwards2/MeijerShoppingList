@@ -97,11 +97,12 @@ delete_category = st.session_state.delete_category
 if delete_index is not None and delete_category is not None:
     if delete_category == "Pickup" and 0 <= delete_index < len(st.session_state.pickup_items):
         st.session_state.pickup_items.pop(delete_index)
+        trigger_rerun = True
     elif delete_category == "In-Store" and 0 <= delete_index < len(st.session_state.instore_items):
         st.session_state.instore_items.pop(delete_index)
+        trigger_rerun = True
     st.session_state.delete_index = None
     st.session_state.delete_category = None
-    trigger_rerun = True
 
 # Trigger rerun at the end only if flagged
 if trigger_rerun:
