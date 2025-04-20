@@ -12,8 +12,8 @@ if 'edit_index' not in st.session_state:
     st.session_state.edit_index = None
 if 'edit_category' not in st.session_state:
     st.session_state.edit_category = None
-if 'needs_rerun' not in st.session_state:
-    st.session_state.needs_rerun = False
+if 'new_item' not in st.session_state:
+    st.session_state.new_item = ""
 
 # Sidebar for actions
 with st.sidebar:
@@ -32,9 +32,9 @@ if st.session_state.edit_index is not None:
         st.session_state.pickup_items[st.session_state.edit_index]
         if st.session_state.edit_category == "Pickup"
         else st.session_state.instore_items[st.session_state.edit_index]
-    ))
+    ), key="edit_input")
 else:
-    item = st.text_input("Item Name")
+    item = st.text_input("Item Name", value=st.session_state.new_item, key="new_input")
 
 # Handle safe selectbox default index
 default_index = 0
@@ -57,7 +57,7 @@ if st.button("Save Item"):
                 st.session_state.pickup_items.append(item)
             else:
                 st.session_state.instore_items.append(item)
-        st.session_state.needs_rerun = True
+        st.session_state.new_item = ""
 
 # Display shopping list with edit/delete icons
 def display_list(items, category):
@@ -69,14 +69,12 @@ def display_list(items, category):
             if st.button("✏️", key=f"edit_{category}_{i}"):
                 st.session_state.edit_index = i
                 st.session_state.edit_category = category
-                st.session_state.needs_rerun = True
         with col3:
             if st.button("❌", key=f"delete_{category}_{i}"):
                 if category == "Pickup" and 0 <= i < len(st.session_state.pickup_items):
                     st.session_state.pickup_items.pop(i)
                 elif category == "In-Store" and 0 <= i < len(st.session_state.instore_items):
                     st.session_state.instore_items.pop(i)
-                st.session_state.needs_rerun = True
 
 st.subheader("Pickup Items")
 if st.session_state.pickup_items:
@@ -89,8 +87,3 @@ if st.session_state.instore_items:
     display_list(st.session_state.instore_items, "In-Store")
 else:
     st.caption("No in-store items yet.")
-
-# Run rerun at the very end if needed
-if st.session_state.needs_rerun:
-    st.session_state.needs_rerun = False
-    st.experimental_rerun()
