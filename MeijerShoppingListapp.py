@@ -1,6 +1,4 @@
 import streamlit as st
-from streamlit_extras.stylable_container import stylable_container
-from streamlit_extras.emoji_icons import emoji_icon
 
 st.set_page_config(page_title="Shopping List App", layout="centered")
 st.title("Weekly Shopping List")
