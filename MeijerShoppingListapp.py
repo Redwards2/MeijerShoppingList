@@ -1,5 +1,7 @@
 import streamlit as st
 import re
+import requests
+from bs4 import BeautifulSoup
 
 st.set_page_config(page_title="Shopping List App", layout="centered")
 st.title("Weekly Shopping List")
@@ -22,6 +24,26 @@ def detect_category(item_name):
     if any(word in item_lower for word in ["milk", "eggs", "bread", "butter", "juice"]):
         return "Pickup"
     return "In-Store"
+
+# Aisle info scraping function
+def get_aisle_info(item_name):
+    query = item_name.replace(" ", "+")
+    search_url = f"https://www.meijer.com/search/{query}.html"
+    try:
+        response = requests.get(search_url, timeout=10)
+        soup = BeautifulSoup(response.text, "html.parser")
+        link_tag = soup.select_one("a.product-tile--title__link")
+        if not link_tag:
+            return None
+        product_url = "https://www.meijer.com" + link_tag.get("href")
+        product_response = requests.get(product_url, timeout=10)
+        product_soup = BeautifulSoup(product_response.text, "html.parser")
+        aisle_tag = product_soup.find(string=re.compile("Aisle.*Section", re.IGNORECASE))
+        if aisle_tag:
+            return aisle_tag.strip()
+    except:
+        return None
+    return None
 
 # Sidebar for actions
 with st.sidebar:
@@ -81,10 +103,10 @@ if st.button("Import List"):
                 st.session_state.instore_items.append(item)
         st.success(f"Imported {len(raw_items)} items using auto-categorization!")
 
-# Display shopping list with edit/delete icons
+# Display shopping list with edit/delete/fetch aisle icons
 def display_list(items, category):
     for i, item in enumerate(items):
-        col1, col2, col3 = st.columns([6, 1, 1])
+        col1, col2, col3, col4 = st.columns([6, 1, 1, 2])
         with col1:
             st.markdown(f"- {item}")
         with col2:
@@ -97,6 +119,13 @@ def display_list(items, category):
                     st.session_state.pickup_items.pop(i)
                 elif category == "In-Store" and 0 <= i < len(st.session_state.instore_items):
                     st.session_state.instore_items.pop(i)
+        with col4:
+            if st.button("🛒 Aisle", key=f"aisle_{category}_{i}"):
+                aisle_info = get_aisle_info(item)
+                if aisle_info:
+                    items[i] = f"{item} ({aisle_info})"
+                else:
+                    st.warning("Aisle info not found.")
 
 st.subheader("Pickup Items")
 if st.session_state.pickup_items:
