@@ -59,6 +59,20 @@ if st.button("Save Item"):
                 st.session_state.instore_items.append(item)
         st.session_state.new_item = ""
 
+# Import texted list
+st.subheader("📥 Import Pasted List")
+import_text = st.text_area("Paste your shopping list here (comma or newline separated):", height=100)
+import_category = st.selectbox("Category for imported items", ["Pickup", "In-Store"], key="import_category")
+
+if st.button("Import List"):
+    if import_text.strip():
+        items = [x.strip() for x in import_text.replace(",", "\n").splitlines() if x.strip()]
+        if import_category == "Pickup":
+            st.session_state.pickup_items.extend(items)
+        else:
+            st.session_state.instore_items.extend(items)
+        st.success(f"Imported {len(items)} items to {import_category} list!")
+
 # Display shopping list with edit/delete icons
 def display_list(items, category):
     for i, item in enumerate(items):
