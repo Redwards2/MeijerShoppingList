@@ -17,6 +17,8 @@ if 'edit_category' not in st.session_state:
     st.session_state.edit_category = None
 if 'new_item' not in st.session_state:
     st.session_state.new_item = ""
+if 'saved_lists' not in st.session_state:
+    st.session_state.saved_lists = {}
 
 # Basic category keyword matching (can expand later)
 def detect_category(item_name):
@@ -48,6 +50,29 @@ def get_aisle_info(item_name):
 # Sidebar for actions
 with st.sidebar:
     st.header("Options")
+
+    st.subheader("💾 Save Current List")
+    save_name = st.text_input("List Name", key="save_input")
+    if st.button("Save List") and save_name:
+        st.session_state.saved_lists[save_name] = {
+            "pickup": list(st.session_state.pickup_items),
+            "instore": list(st.session_state.instore_items),
+        }
+        st.success(f"Saved list as '{save_name}'")
+
+    st.subheader("📂 Load Saved List")
+    if st.session_state.saved_lists:
+        list_names = list(st.session_state.saved_lists.keys())
+        selected_list = st.selectbox("Select a list to load", list_names)
+        if st.button("Load List"):
+            data = st.session_state.saved_lists[selected_list]
+            st.session_state.pickup_items = data.get("pickup", [])
+            st.session_state.instore_items = data.get("instore", [])
+            st.success(f"Loaded list: {selected_list}")
+    else:
+        st.caption("No saved lists yet.")
+
+    st.markdown("---")
     if st.button("Clear List"):
         st.session_state.pickup_items = []
         st.session_state.instore_items = []
