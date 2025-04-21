@@ -1,4 +1,5 @@
 import streamlit as st
+import re
 
 st.set_page_config(page_title="Shopping List App", layout="centered")
 st.title("Weekly Shopping List")
@@ -14,6 +15,13 @@ if 'edit_category' not in st.session_state:
     st.session_state.edit_category = None
 if 'new_item' not in st.session_state:
     st.session_state.new_item = ""
+
+# Basic category keyword matching (can expand later)
+def detect_category(item_name):
+    item_lower = item_name.lower()
+    if any(word in item_lower for word in ["milk", "eggs", "bread", "butter", "juice"]):
+        return "Pickup"
+    return "In-Store"
 
 # Sidebar for actions
 with st.sidebar:
@@ -62,16 +70,16 @@ if st.button("Save Item"):
 # Import texted list
 st.subheader("📥 Import Pasted List")
 import_text = st.text_area("Paste your shopping list here (comma or newline separated):", height=100)
-import_category = st.selectbox("Category for imported items", ["Pickup", "In-Store"], key="import_category")
-
 if st.button("Import List"):
     if import_text.strip():
-        items = [x.strip() for x in import_text.replace(",", "\n").splitlines() if x.strip()]
-        if import_category == "Pickup":
-            st.session_state.pickup_items.extend(items)
-        else:
-            st.session_state.instore_items.extend(items)
-        st.success(f"Imported {len(items)} items to {import_category} list!")
+        raw_items = [x.strip() for x in import_text.replace(",", "\n").splitlines() if x.strip()]
+        for item in raw_items:
+            category = detect_category(item)
+            if category == "Pickup":
+                st.session_state.pickup_items.append(item)
+            else:
+                st.session_state.instore_items.append(item)
+        st.success(f"Imported {len(raw_items)} items using auto-categorization!")
 
 # Display shopping list with edit/delete icons
 def display_list(items, category):
