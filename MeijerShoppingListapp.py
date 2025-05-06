@@ -2,6 +2,8 @@ import streamlit as st
 import re
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
+import os
 
 st.set_page_config(page_title="Shopping List App", layout="centered")
 st.title("Weekly Shopping List")
@@ -19,6 +21,42 @@ if 'new_item' not in st.session_state:
     st.session_state.new_item = ""
 if 'saved_lists' not in st.session_state:
     st.session_state.saved_lists = {}
+
+# Load meal planning options from CSV or default
+meal_csv_path = "meal_options.csv"
+try:
+    meal_df = pd.read_csv(meal_csv_path)
+    meats = meal_df[meal_df['Category'] == 'Meat']['Item'].tolist()
+    vegetables = meal_df[meal_df['Category'] == 'Vegetable']['Item'].tolist()
+    sides = meal_df[meal_df['Category'] == 'Side']['Item'].tolist()
+except:
+    meats = ["Hamburgers", "Pork Chops", "Porkloin", "Steak", "Chicken Breast", "BBQ Chicken Drumsticks", "Chicken (for Salad)", "Brats/Dogs"]
+    vegetables = ["Asparagus", "Zucchini", "Broccoli", "Broccolini", "Cauliflower", "Roasted Carrots"]
+    sides = ["Potatoes", "Garlic Bread", "Butter Noodles"]
+    meal_df = pd.DataFrame({"Category": ["Meat"]*len(meats) + ["Vegetable"]*len(vegetables) + ["Side"]*len(sides),
+                            "Item": meats + vegetables + sides})
+    meal_df.to_csv(meal_csv_path, index=False)
+
+# Function to add new items to meal_options.csv if not already present
+def maybe_add_to_csv(item_name):
+    if not os.path.exists(meal_csv_path):
+        return
+    if item_name not in meal_df['Item'].values:
+        new_row = pd.DataFrame([{"Category": "In-Store", "Item": item_name}])
+        updated_df = pd.concat([meal_df, new_row], ignore_index=True)
+        updated_df.to_csv(meal_csv_path, index=False)
+
+# Meal planning UI
+st.sidebar.markdown("---")
+st.sidebar.subheader("🍽 Meal Planner")
+selected_meat = st.sidebar.selectbox("Choose a meat", meats)
+selected_veg = st.sidebar.selectbox("Choose a vegetable", vegetables)
+selected_side = st.sidebar.selectbox("Choose a side", sides)
+if st.sidebar.button("Add Meal Plan to List"):
+    st.session_state.pickup_items.append(selected_meat)
+    st.session_state.instore_items.append(selected_veg)
+    st.session_state.instore_items.append(selected_side)
+    st.sidebar.success("Meal plan items added to your list!")
 
 # Basic category keyword matching (can expand later)
 def detect_category(item_name):
@@ -51,7 +89,7 @@ def get_aisle_info(item_name):
 with st.sidebar:
     st.header("Options")
 
-    st.subheader("💾 Save Current List")
+    st.subheader("📂 Save Current List")
     save_name = st.text_input("List Name", key="save_input")
     if st.button("Save List") and save_name:
         st.session_state.saved_lists[save_name] = {
@@ -100,6 +138,7 @@ category = st.selectbox("Category", ["Pickup", "In-Store"], index=default_index)
 
 if st.button("Save Item"):
     if item:
+        maybe_add_to_csv(item)
         if st.session_state.edit_index is not None:
             if category == "Pickup":
                 st.session_state.pickup_items[st.session_state.edit_index] = item
@@ -115,12 +154,13 @@ if st.button("Save Item"):
         st.session_state.new_item = ""
 
 # Import texted list
-st.subheader("📥 Import Pasted List")
+st.subheader("📅 Import Pasted List")
 import_text = st.text_area("Paste your shopping list here (comma or newline separated):", height=100)
 if st.button("Import List"):
     if import_text.strip():
         raw_items = [x.strip() for x in import_text.replace(",", "\n").splitlines() if x.strip()]
         for item in raw_items:
+            maybe_add_to_csv(item)
             category = detect_category(item)
             if category == "Pickup":
                 st.session_state.pickup_items.append(item)
